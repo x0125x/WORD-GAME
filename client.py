@@ -49,7 +49,8 @@ class Connection:
         print('Disconnecting...')
         self.conn_alive = False
 
-    def get_client_input(self, time_max):
+    @staticmethod
+    def get_client_input(time_max):
         enter_key = 13
         space_bar_key = 32
         backspace = 8

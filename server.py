@@ -37,9 +37,9 @@ class Queue:
             time.sleep(1)
             for player in players:
                 player.client_socket.sendall(f'The game will start in: {str(i)}\n\0'.encode())
-        Games.append(game)
+        games.append(game)
         game.run_game()
-        Games.remove(game)
+        games.remove(game)
 
     def create_game(self):
         print('[Queue]: Looking for players')
@@ -130,8 +130,13 @@ def start_new_connection(client_socket, client_addr, queue):
             print(socket.error)
     except:
         print(f'[Connection]: User {client_addr} unreachable')
-        client_socket.sendall('Connection cannot be established. Quitting...\0'.encode())
-        client_socket.sendall('\0'.encode())
+        try:
+            if player is not None:
+                player.logout()
+            client_socket.sendall('Connection cannot be established. Quitting...\0'.encode())
+            client_socket.sendall('\0'.encode())
+        except ConnectionAbortedError:
+            pass
 
 
 if __name__ == '__main__':

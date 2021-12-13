@@ -113,7 +113,7 @@ class Player:
                     err_msg = err_msg + '\0'
                     self.client_socket.sendall(err_msg.encode())
                 return None
-            except:
+            except ConnectionAbortedError:
                 return None
 
     def get_hashed_password(self, message, max_len):
@@ -298,7 +298,10 @@ class Game:
                                 'You have reached the maximum number of tries and will perform no action.')
 
     def perform_option(self, player, option):
-        return self.options[option](player)
+        try:
+            return self.options[option](player)
+        except KeyError:
+            return False
 
     def print_and_update_scores(self):
         self.send_to_all(self.players, 'The game has finished.\n\nScores:')
@@ -327,7 +330,7 @@ class Game:
                                                          '\n'.join([str(p.id) for p in guessing_players]),
                                                      'player_choosing_id': choosing_player.id},
                                 f'game_id={self.id}')
-            print(f'[Game]: Data of game #{self.id} has been updated')
+            print(f'[Game #{self.id}]: Data has been updated')
 
     def reset_game_values(self):
         self.word = None
@@ -342,9 +345,8 @@ class Game:
     def run_game(self):
         self.initialize_the_game()
         guessing_players = copy.copy(self.players)
-        print('copy:', guessing_players)
         choosing_player = None
-        for player in guessing_players:
+        for player in self.players:
             self.send_to_all(self.players, f'\nPlayer {player.username} '
                                            f'has been selected to choose the word for this round.')
             if self.set_word(player):
@@ -354,8 +356,7 @@ class Game:
                                                   f'and are now in the spectator mode.')
                 break
         if self.word is None:
-            self.send_to_all(self.players, 'Nobody chose the word. The game has been aborted '
-                                           'and the records will not be saved.')
+            self.send_to_all(self.players, 'Nobody chose the word. The game has been aborted.')
             self.print_and_update_scores()
             self.reset_game_values()
         else:
@@ -376,23 +377,34 @@ class Game:
                                                                'The game will finish now.')
                                 self.is_running = False
                                 break
-                        player.logout()
-                        continue
+                        break
                     if player == choosing_player:
                         continue
                     for i in range(MAX_GUESSES):
+                        print(f'player: {player.username}: is_online: {player.is_online}')
                         if not player.is_online:
-                            continue
-                        self.send_to_all(self.players, self.display_word)
-                        if self.recent_guess is not None:
-                            self.send_to_all(self.players, f'{self.recent_guess} <- Result of '
-                                                           f'player {player.username}\'s try')
-                            self.recent_guess = None
-                        if not self.is_running:
+                            self.send_to_all(self.players, f'User {player.username} has disconnected.')
+                            if len(guessing_players) < 1:
+                                self.send_to_all(self.players, 'There are not enough players to continue this game.'
+                                                               ' The game will finish now.')
+                                self.is_running = False
+                            try:
+                                guessing_players.remove(player)
+                            except:
+                                pass
                             break
-                        opt = self.get_option(player)
-                        if opt is not None:
-                            if not self.perform_option(player, opt):
+                        else:
+                            self.send_to_all(self.players, self.display_word)
+                            if self.recent_guess is not None:
+                                self.send_to_all(self.players, f'{self.recent_guess} <- Result of '
+                                                               f'player {player.username}\'s try')
+                                self.recent_guess = None
+                            if not self.is_running:
                                 break
+                            opt = self.get_option(player)
+                            if opt is not None:
+                                if not self.perform_option(player, opt):
+                                    break
+                    self.send_to_all(self.players, f'This was player {player.username}\'s last try.')
             self.print_and_update_scores()
             self.reset_game_values()
