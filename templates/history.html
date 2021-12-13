@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}HISTORY{% endblock %}
+{% block body %}
+    <div>
+        <h3>Przydatne linki:</h3>
+        <a href="{{ url_for('display_main_page') }}">Strona Główna</a>
+        <a href="{{ url_for('display_ranking') }}">Ranking Graczy</a>
+    </div>
+    <div>
+        <h3>Historia Gier:</h3>
+        <table>
+            <tr>
+                <th>GAME ID</th>
+                <th>SELECTED WORD</th>
+                <th>NUMBER OF PLAYERS</th>
+                <th>CHOOSING PLAYER ID</th>
+                <th>GUESSING PLAYERS ID</th>
+            </tr>
+             {% for col in rows %}
+                <tr>
+                    {% for c in col %}
+                        <td>{{ c }}</td>
+                    {% endfor %}
+                </tr>
+             {% endfor %}
+        </table>
+    </div>
+{% endblock %}

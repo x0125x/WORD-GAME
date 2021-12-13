@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% block head %}
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/stylesheets/base.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/stylesheets/tables.css')}}">
+    {% endblock %}
+</head>
+<body>
+<div id="logo">WORD GAME</div>
+{% block body %}{% endblock %}
+</body>
+</html>

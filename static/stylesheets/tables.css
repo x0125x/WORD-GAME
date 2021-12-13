@@ -1,0 +1,12 @@
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+td, th {
+  border: .1vw solid #393E46;
+  text-align: left;
+  padding: 1vw;
+}
+tr:nth-child(even) {
+  background-color: #393E46;
+  }

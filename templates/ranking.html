@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}WORD GAME{% endblock %}
+{% block body %}
+    <div>
+        <h3>Przydatne linki:</h3>
+        <a href="{{ url_for('display_main_page') }}">Strona Główna</a>
+        <a href="{{ url_for('display_history') }}">Historia Gier</a>
+    </div>
+    <div>
+        <h3>Ranking Graczy:</h3>
+        <table>
+            <tr>
+                <th>POSITION</th>
+                <th>USER ID</th>
+                <th>USERNAME</th>
+                <th>SCORE</th>
+            </tr>
+             {% for col in rows %}
+                <tr>
+                    <td>{{loop.index}}</td>
+                    {% for c in col %}
+                        <td>{{ c }}</td>
+                    {% endfor %}
+                </tr>
+             {% endfor %}
+        </table>
+    </div>
+{% endblock %}

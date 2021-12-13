@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}WORD GAME{% endblock %}
+{% block body %}
+    <div>
+        <h3>Przydatne linki:</h3>
+        <a href="{{ url_for('display_history') }}">Historia Gier</a>
+        <a href="{{ url_for('display_ranking') }}">Ranking Graczy</a>
+    </div>
+    <div>
+        <h3>Welcome to the WORD GAME</h3>
+        <p>On this website you can check the current rankings.<br>
+        After a successful login in the terminal you will be given a chance to join the game.</p>
+        <h3>WORD GAME RULES:</h3>
+        <p>1. You have to send your reply within 10 seconds not to be kicked out of the server</p>
+        <p>2. You have to send your reply within 2 seconds not to be ignored by the server</p>
+        <p>3. Queuing time lasts 5 minutes maximally. After this stage a game will try to get launched.</p>
+        <p>4. The game will start automatically when a queue timer stops and the queue contains of at least 2 ACTIVE players
+        or when 10 players join the queue.</p>
+        <p>5. One player at a time will be asked to choose a word for others to guess
+            until the word is being chosen or there are no more players left in the game.</p>
+        <p>6. The word has to be validated with a dictionary to be accepted by the server</p>
+        <p>7. Each player can choose one of 2 options during the game:<br>
+            [+] to guess a letter, or<br>
+            [=] to guess the word.</p>
+        <p>8. Each guessed letter will give the player n * 1 point, where n means number of occurances
+            of the chosen letter in the word</p>
+        <p>9. Guessing the word will give the player a total of 5 points</p>
+        <p>10. Each try of not following the instructions or maliciously inserted data
+            will result in the player being kicked out of the server</p>
+    </div>
+    <div>
+        <h3>There are currently {{ queue_len }} players waiting in the queue:</h3>
+        <table>
+            <tr>
+                <th>POSITION</th>
+                <th>USER ID</th>
+                <th>USERNAME</th>
+            </tr>
+             {% for col in rows %}
+                <tr>
+                    <td>{{loop.index}}</td>
+                    {% for c in col %}
+                        <td>{{ c }}</td>
+                    {% endfor %}
+                </tr>
+             {% endfor %}
+        </table>
+    </div>
+{% endblock %}

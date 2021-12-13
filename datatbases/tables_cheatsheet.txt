@@ -1,0 +1,15 @@
+1. table name: users
+   table columns:
+        - user_id                   [INTEGER PRIMARY KEY]
+        - username                  [TEXT(20)]
+        - password                  [TEXT(100)]
+        - score                     [INTEGER DEFAULT 0]
+        - last_game_id              [INTEGER DEFAULT -1]
+
+3. table name: game_history
+   table columns:
+        - game_id                   [INTEGER PRIMARY KEY]
+        - selected_word             [TEXT]
+        - num_of_players            [INTEGER]
+        - players_guessing_id       [TEXT]
+        - player_choosing_id        [INTEGER]
