@@ -1,5 +1,6 @@
 import sqlite3
 from threading import Lock
+from config import DB_FOLDER
 
 lock = Lock()
 
@@ -9,7 +10,7 @@ lock = Lock()
 # args={col1: val_type1, col2: val_type2, ...}
 def create_table(name, args):
     with lock:
-        conn = sqlite3.connect(f'{name}')
+        conn = sqlite3.connect(f'{DB_FOLDER}/{name}')
         c = conn.cursor()
 
         keys = list(args.keys())
@@ -29,7 +30,7 @@ def create_table(name, args):
 # args={col1: val1, col2: val2, ...}
 def add_to_table(name, args):
     with lock:
-        conn = sqlite3.connect(f'{name}')
+        conn = sqlite3.connect(f'{DB_FOLDER}/{name}')
         c = conn.cursor()
         keys = list(args.keys())
         vals = tuple(args.values())
@@ -45,7 +46,7 @@ def add_to_table(name, args):
 # args={col1: val1, col2: val2, ...}
 def update_table(name, args, condition):
     with lock:
-        conn = sqlite3.connect(f'{name}')
+        conn = sqlite3.connect(f'{DB_FOLDER}/{name}')
         c = conn.cursor()
         keys = list(args.keys())
         vals = tuple(args.values())
@@ -60,7 +61,7 @@ def update_table(name, args, condition):
 # and returns fetched info (or None if record not found)
 def is_in_table(name, args={}, fetch='*'):
     with lock:
-        conn = sqlite3.connect(f'{name}')
+        conn = sqlite3.connect(f'{DB_FOLDER}/{name}')
         c = conn.cursor()
 
         keys = list(args.keys())
@@ -79,7 +80,7 @@ def is_in_table(name, args={}, fetch='*'):
 # and returns fetched info
 def get_in_order(name, fetch, order):
     with lock:
-        conn = sqlite3.connect(f'{name}')
+        conn = sqlite3.connect(f'{DB_FOLDER}/{name}')
         c = conn.cursor()
 
         c.execute(f'SELECT {fetch} FROM {name} ORDER BY {order}')

@@ -131,7 +131,6 @@ class Player:
                 'last_game_id': 'INTEGER DEFAULT -1'}
 
         tables.create_table(LOGIN_REGISTER_TABLE, args)
-
         username = None
         while username is None:
             username = self.get_input('Choose a unique username: ', ALPHABET + DIGITS, USERNAME_MAX_LEN)
