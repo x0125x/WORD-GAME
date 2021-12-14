@@ -14,12 +14,16 @@ def display_main_page():
 @app.route('/history')
 def display_history():
     data = tables.get_in_order(GAME_HISTORY_TABLE, fetch='*', order='game_id DESC')
+    if data is None:
+        return render_template('history.html')
     return render_template('history.html', rows=data)
 
 
 @app.route('/ranking')
 def display_ranking():
     data = tables.get_in_order(LOGIN_REGISTER_TABLE, fetch='user_id, username, score', order='score DESC')
+    if data is None:
+        return render_template('ranking.html')
     return render_template('ranking.html', rows=data)
 
 

@@ -123,7 +123,6 @@ def start_new_connection(client_socket, client_addr, queue):
     if player is None:
         client_socket.sendall('\0'.encode())
     elif player.is_online:
-        print('foo')
         if player.in_queue:
             queue.remove_from_queue(player)
         player.logout()

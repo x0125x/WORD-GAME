@@ -338,7 +338,7 @@ class Game:
         with self.lock:
             tables.update_table(GAME_HISTORY_TABLE, {'selected_word': self.word,
                                                      'players_guessing_id':
-                                                         '</br>'.join([str(id_) for id_ in guessing_players_ids]),
+                                                         '\n'.join([str(id_) for id_ in guessing_players_ids]),
                                                      'player_choosing_id': str(choosing_player_id)},
                                 f'game_id={self.id}')
             print(f'[Game #{self.id}]: Data has been updated')
