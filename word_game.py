@@ -62,10 +62,16 @@ class Player:
         self.in_queue = False
 
     def logout(self):
-        self.client_socket.sendall('\0'.encode())
+        self.is_online = False
+        try:
+            time.sleep(0.1)
+            self.client_socket.sendall('\0'.encode())
+        except ConnectionAbortedError:
+            pass
         self.client_socket.shutdown(socket.SHUT_RDWR)
         self.client_socket.close()
-        self.is_online = False
+        print(f'[Access]: Player {self.username}(#{self.id}) has logged out.')
+        self = None
         return None
 
     def get_input(self, message, valid_chars, max_len, err_msg=None):
@@ -81,7 +87,6 @@ class Player:
                     try:
                         inp = self.client_socket.recv(SIZE_OF_DATA).decode().lower()
                     except socket.timeout:
-                        self.in_game = False
                         self.client_socket.sendall('\nYou type too slowly. '
                                                    'You have been kicked out of the server :c\0'.encode())
                         self.logout()
@@ -114,10 +119,13 @@ class Player:
                     self.client_socket.sendall(err_msg.encode())
                 return None
             except ConnectionAbortedError:
+                self.logout()
+                return None
+            except:
                 return None
 
     def get_hashed_password(self, message, max_len):
-        password = self.get_input(message, ALPHABET, max_len)  # TODO: implement secure password measures
+        password = self.get_input(message, ALPHABET, max_len)  # TODO: secure password measures can be implemented here
         if password is None:
             return None
         return binascii.hexlify(hashlib.pbkdf2_hmac(HASH_METHOD, password.encode(), SALT, ITERATIONS)).decode()
@@ -149,6 +157,7 @@ class Player:
 
         tables.add_to_table(LOGIN_REGISTER_TABLE, {'username': username, 'password': passwd})
         self.is_online = True
+        print(f'[Access]: Player {self.username}(#{self.id}) has registered')
         return self.update_data()
 
     def is_login_successful(self, table_name, username, passwd):
@@ -170,9 +179,11 @@ class Player:
             self.password = passwd
             self.is_online = True
             self.update_data()
+            print(f'[Access]: Player {self.username}(#{self.id}) has logged in')
             return self
-        self.client_socket.sendall('Connection closing\0'.encode())  # TODO: close connection
-        # self.logout()   # TODO: eventually delete this line, added after it was working already
+        self.client_socket.sendall('Access denied\0'.encode())
+        time.sleep(0.1)
+        self.logout()
         return None
 
 
@@ -321,14 +332,14 @@ class Game:
                                                                'players_guessing_id': '[NOT SET]',
                                                                'player_choosing_id': '[NOT SET]',
                                                                'selected_word': '[NOT SET]'})
-            print(f'[Game]: Game #{self.id} has been added to the history')
+            print(f'[Game #{self.id}]: Game has been added to the history')
 
-    def update_history(self, guessing_players, choosing_player):
+    def update_history(self, guessing_players_ids, choosing_player_id):
         with self.lock:
             tables.update_table(GAME_HISTORY_TABLE, {'selected_word': self.word,
                                                      'players_guessing_id':
-                                                         '\n'.join([str(p.id) for p in guessing_players]),
-                                                     'player_choosing_id': choosing_player.id},
+                                                         '</br>'.join([str(id_) for id_ in guessing_players_ids]),
+                                                     'player_choosing_id': str(choosing_player_id)},
                                 f'game_id={self.id}')
             print(f'[Game #{self.id}]: Data has been updated')
 
@@ -344,16 +355,16 @@ class Game:
 
     def run_game(self):
         self.initialize_the_game()
-        guessing_players = copy.copy(self.players)
+        guessing_players = [p.id for p in self.players]
         choosing_player = None
         for player in self.players:
             self.send_to_all(self.players, f'\nPlayer {player.username} '
                                            f'has been selected to choose the word for this round.')
             if self.set_word(player):
-                guessing_players.remove(player)
-                choosing_player = player
-                self.send_to_all(choosing_player, f'You have chosen the word "{self.word}" '
-                                                  f'and are now in the spectator mode.')
+                choosing_player = player.id
+                guessing_players.remove(choosing_player)
+                self.send_to_all(player, f'You have chosen the word "{self.word}" '
+                                         f'and are now in the spectator mode.')
                 break
         if self.word is None:
             self.send_to_all(self.players, 'Nobody chose the word. The game has been aborted.')
@@ -363,48 +374,37 @@ class Game:
             self.update_history(guessing_players, choosing_player)
             while self.is_running:
                 for player in self.players:
-                    if not player.in_game:
-                        if player == choosing_player:
+                    if player.id == choosing_player:
+                        if not player.is_online:
                             self.send_to_all(self.players, f'Choosing player {player.username} is not in the game.')
-                        else:
-                            self.send_to_all(self.players, f'Guessing player {player.username} is not in the game.')
+                        continue
+                    if len(guessing_players) < 1:
+                        self.send_to_all(self.players, 'There are not enough players to continue this game. '
+                                                       'The game will finish now.')
+                        self.is_running = False
+                        break
+                    if player.id not in guessing_players:
+                        break
+                    self.send_to_all(self.players, self.display_word)
+                    for i in range(MAX_GUESSES):
+                        if not player.is_online:
                             try:
-                                guessing_players.remove(player)
+                                guessing_players.remove(player.id)
+                                self.send_to_all(self.players, f'Guessing player {player.username} has left the game.')
                             except ValueError:
                                 pass
-                            if len(guessing_players) < 1:
-                                self.send_to_all(self.players, 'There are not enough players to continue this game. '
-                                                               'The game will finish now.')
-                                self.is_running = False
-                                break
-                        break
-                    if player == choosing_player:
-                        continue
-                    for i in range(MAX_GUESSES):
-                        print(f'player: {player.username}: is_online: {player.is_online}')
-                        if not player.is_online:
-                            self.send_to_all(self.players, f'User {player.username} has disconnected.')
-                            if len(guessing_players) < 1:
-                                self.send_to_all(self.players, 'There are not enough players to continue this game.'
-                                                               ' The game will finish now.')
-                                self.is_running = False
-                            try:
-                                guessing_players.remove(player)
-                            except:
-                                pass
                             break
-                        else:
-                            self.send_to_all(self.players, self.display_word)
-                            if self.recent_guess is not None:
-                                self.send_to_all(self.players, f'{self.recent_guess} <- Result of '
-                                                               f'player {player.username}\'s try')
-                                self.recent_guess = None
-                            if not self.is_running:
+                        if not self.is_running:
+                            break
+                        opt = self.get_option(player)
+                        if opt is not None:
+                            if not self.perform_option(player, opt):
                                 break
-                            opt = self.get_option(player)
-                            if opt is not None:
-                                if not self.perform_option(player, opt):
-                                    break
+                        self.send_to_all(self.players, self.display_word)
+                        if self.recent_guess is not None:
+                            self.send_to_all(self.players, f'{self.recent_guess} <- Result of '
+                                                           f'player {player.username}\'s try')
+                            self.recent_guess = None
                     self.send_to_all(self.players, f'This was player {player.username}\'s last try.')
             self.print_and_update_scores()
             self.reset_game_values()

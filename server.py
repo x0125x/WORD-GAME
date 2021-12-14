@@ -84,25 +84,18 @@ def is_game_active(game_id):
 
 
 def start_new_connection(client_socket, client_addr, queue):
-    # with client_socket:
+    print(f'[Connection]: User {client_addr} connected')
+    player = Player(client_socket)
     try:
         client_socket.sendall(f'Hello, {client_addr}!\nWelcome to the server!\n\n'
                               f'Choose one of the following options:\n'
                               f'[r] - register\n'
                               f'[l] - login\n\0'.encode())
-        player = Player(client_socket)
-        # player.client_socket = client_socket
         data = player.get_input('>> ', ['l', 'r'], 1, '\nMaximum number of tries reached. Disconnecting...')
         if data == 'l':
-            player = player.login()
-            if player is None:
-                client_socket.sendall('Login unsuccessful\0'.encode())
+            player.login()
         elif data == 'r':
-            player = player.register()
-            if player is None:
-                client_socket.sendall('Register unsuccessful\0'.encode())
-        else:
-            player = player.logout()
+            player.register()
         if player.is_online:
             client_socket.sendall(f'Hello, {player.username}!\n\n\0'.encode())
             client_socket.sendall('Press CTRL-D at any point of time to logout.\0'.encode())
@@ -112,8 +105,6 @@ def start_new_connection(client_socket, client_addr, queue):
                                       f'[l] - logout\n\0'.encode())
                 data = player.get_input('>> ', ['l', 'p'], 1, '\nMaximum number of tries reached. Disconnecting...')
                 if data == 'l':
-                    if player.in_queue:
-                        queue.remove_from_queue(player)
                     player.logout()
                 elif data == 'p':
                     if not player.in_queue:
@@ -123,20 +114,20 @@ def start_new_connection(client_socket, client_addr, queue):
                                               f'other players waiting.\0'.encode())
                     while (player.is_online and player.in_queue) or (player.is_online and player.in_game):
                         time.sleep(1)
-        try:
-            client_socket.sendall('Access denied\0'.encode())
-            client_socket.close()
-        except socket.error:
-            print(socket.error)
     except:
         print(f'[Connection]: User {client_addr} unreachable')
         try:
-            if player is not None:
-                player.logout()
             client_socket.sendall('Connection cannot be established. Quitting...\0'.encode())
-            client_socket.sendall('\0'.encode())
-        except ConnectionAbortedError:
-            pass
+        except socket.error:
+            f'[Connection]: User {client_addr} encountered an socket error!\n{socket.error}'
+    if player is None:
+        client_socket.sendall('\0'.encode())
+    elif player.is_online:
+        print('foo')
+        if player.in_queue:
+            queue.remove_from_queue(player)
+        player.logout()
+    print(f'[Connection]: User {client_addr} disconnected')
 
 
 if __name__ == '__main__':
