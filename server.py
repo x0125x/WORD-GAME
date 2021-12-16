@@ -93,10 +93,11 @@ def start_new_connection(client_socket, client_addr, queue):
                               f'[l] - login\n\0'.encode())
         data = player.get_input('>> ', ['l', 'r'], 1, '\nMaximum number of tries reached. Disconnecting...')
         if data == 'l':
-            player.login()
+            player.login(players)
         elif data == 'r':
             player.register()
         if player.is_online:
+            players.append(player)
             client_socket.sendall(f'Hello, {player.username}!\n\n\0'.encode())
             client_socket.sendall('Press CTRL-D at any point of time to logout.\0'.encode())
             while player.is_online:
@@ -106,6 +107,7 @@ def start_new_connection(client_socket, client_addr, queue):
                 data = player.get_input('>> ', ['l', 'p'], 1, '\nMaximum number of tries reached. Disconnecting...')
                 if data == 'l':
                     player.logout()
+                    players.remove(player)
                 elif data == 'p':
                     if not player.in_queue:
                         queue.add_to_queue(player)
@@ -126,6 +128,7 @@ def start_new_connection(client_socket, client_addr, queue):
         if player.in_queue:
             queue.remove_from_queue(player)
         player.logout()
+        players.remove(player)
     print(f'[Connection]: User {client_addr} disconnected')
 
 
@@ -139,6 +142,7 @@ if __name__ == '__main__':
         print('[Server]: Server started')
         queue = Queue()
         games = []
+        players = []
         website_thread = _thread.start_new_thread(run_website, (queue,))
         queuing_system_thread = _thread.start_new_thread(queue.create_game, ())
         while True:

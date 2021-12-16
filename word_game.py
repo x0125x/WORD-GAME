@@ -166,7 +166,15 @@ class Player:
         self.client_socket.sendall('\nCredentials not matching.\0'.encode())
         return False
 
-    def login(self):
+    def is_player_online(self, players):
+        print(players)
+        for player in players:
+            if player.id == self.id:
+                print("double")
+                return True
+        return False
+
+    def login(self, players):
         username = self.get_input('Username: ', ALPHABET + DIGITS, USERNAME_MAX_LEN)
         if username is None:
             return None
@@ -174,13 +182,14 @@ class Player:
         if passwd is None:
             return None
         if self.is_login_successful(LOGIN_REGISTER_TABLE, username, passwd):
-            self.client_socket.sendall('\n\nLogin successful\0'.encode())
             self.username = username
             self.password = passwd
             self.is_online = True
             self.update_data()
-            print(f'[Access]: Player {self.username}(#{self.id}) has logged in')
-            return self
+            if not self.is_player_online(players):
+                self.client_socket.sendall('\n\nLogin successful\0'.encode())
+                print(f'[Access]: Player {self.username}(#{self.id}) has logged in')
+                return self
         self.client_socket.sendall('Access denied\0'.encode())
         time.sleep(0.1)
         self.logout()
