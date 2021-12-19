@@ -17,27 +17,24 @@
     
     Aplikacja w oparciu o komunikację klient-serwer umożliwia rozgrywkę multiplayer w grę słowną. Zasady rozgrywki opisane są na stronie internetowej, którą apkikacja obsługuje na osobnym wątku. W sumie w wykorzystaniu są trzy wątki (strona internetowa + obsługa kolejki + konsola administratora) + po jednym na każdego klienta. Dane o użytkownikach oraz o historii rozgrywek przechowywane są w bazach danych (działania na bibliotece sqlite3). Opis baz danych znajduje się w pliku /databases/tables_cheatsheet.txt.
 
-   - rejestracja, logowanie i kolejkowanie:
+   - rejestracja:
 
-![img1]()
+![img1](https://user-images.githubusercontent.com/68823168/146683191-846711ea-ecbb-441a-b544-a2ca89d667f5.png)
 
    - rozgrywka:
 
-![img2]()
+![img2](https://user-images.githubusercontent.com/68823168/146683292-58fec54c-b007-4b00-b883-441a2638a9b9.png)
 
    - updatowanie wyników na stronie:
 
-![img3]()
+![img3](https://user-images.githubusercontent.com/68823168/146683260-9c9e9ed1-7d0f-468b-b9f9-bcb58ea8bbd2.png)
 
-![img4]()
+![img4](https://user-images.githubusercontent.com/68823168/146683262-017d3549-09b1-4065-8af6-7e84f5cb963d.png)
 
-   - ponowne logowanie użytkowników:
 
-![img5]()
-
-   - zakańczanie gry po wyjściu osób zgadujących:
+   - zakańczanie gry:
    
-![img6]()
+![img5](https://user-images.githubusercontent.com/68823168/146683238-fcc35d34-73f7-4dd8-a057-0cb12d78aedd.png)
 
 
 4. URUCHAMIANIE:
@@ -54,8 +51,8 @@
    
 5. STRUKTURA PROJEKTU:
     - databases:        (zbiór baz danych i cheatsheet w formie tekstowej)
-        - users
-        - game_history
+        - users.db
+        - game_history.db
         - tables_cheatsheet.txt
     - logs:             (logi z gier, kolejkowania i aktywności graczy)
         - Game_<id>.txt
