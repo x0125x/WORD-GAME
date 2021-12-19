@@ -1,0 +1,30 @@
+[Queue]: Queue has been created
+[Queue]: Looking for players
+[Queue]: Queuing completed. Timed out.
+[Queue]: Queuing completed. Timed out.
+[Queue]: Queue has been created
+[Queue]: Looking for players
+[Queue]: Added player p1 to the queue
+[Queue]: Added player p2 to the queue
+[Queue]: Added player p3 to the queue
+[Queue]: Queuing completed. A game will be launched.
+[Queue]: Queuing completed. Timed out.
+[Queue]: Added player p1 to the queue
+[Queue]: Added player p3 to the queue
+[Queue]: Removed player p1(#1) from the queue
+[Queue]: Removed player p2(#2) from the queue
+[Queue]: Removed player p3(#3) from the queue
+[Queue]: Queuing completed. Timed out.
+[Queue]: Queuing completed. Timed out.
+[Queue]: Added player p1 to the queue
+[Queue]: Queuing completed. Timed out.
+[Queue]: Added player p3 to the queue
+[Queue]: Queuing completed. A game will be launched.
+[Queue]: Queuing completed. Timed out.
+[Queue]: Added player p1 to the queue
+[Queue]: Added player p3 to the queue
+[Queue]: Removed player p3(#3) from the queue
+[Queue]: Removed player p1(#1) from the queue
+[Queue]: Queuing completed. Timed out.
+[Queue]: Queuing completed. Timed out.
+[Queue]: Queuing completed. Timed out.

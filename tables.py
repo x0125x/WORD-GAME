@@ -10,7 +10,7 @@ lock = Lock()
 # args={col1: val_type1, col2: val_type2, ...}
 def create_table(name, args):
     with lock:
-        conn = sqlite3.connect(f'{DB_FOLDER}/{name}')
+        conn = sqlite3.connect(f'{DB_FOLDER}/{name}.db')
         c = conn.cursor()
 
         keys = list(args.keys())
@@ -31,7 +31,7 @@ def create_table(name, args):
 def add_to_table(name, args):
     try:
         with lock:
-            conn = sqlite3.connect(f'{DB_FOLDER}/{name}')
+            conn = sqlite3.connect(f'{DB_FOLDER}/{name}.db')
             c = conn.cursor()
             keys = list(args.keys())
             vals = tuple(args.values())
@@ -51,7 +51,7 @@ def add_to_table(name, args):
 def update_table(name, args, condition):
     try:
         with lock:
-            conn = sqlite3.connect(f'{DB_FOLDER}/{name}')
+            conn = sqlite3.connect(f'{DB_FOLDER}/{name}.db')
             c = conn.cursor()
             keys = list(args.keys())
             vals = tuple(args.values())
@@ -61,7 +61,6 @@ def update_table(name, args, condition):
             conn.close()
     except sqlite3.OperationalError:
         print(f'[Data]: Error when getting data from table {name}:\n{sqlite3.OperationalError}')
-        return None
 
 
 # takes in table name and a 'condition dictionary' containing column names and their values:
@@ -70,7 +69,7 @@ def update_table(name, args, condition):
 def is_in_table(name, args={}, fetch='*'):
     try:
         with lock:
-            conn = sqlite3.connect(f'{DB_FOLDER}/{name}')
+            conn = sqlite3.connect(f'{DB_FOLDER}/{name}.db')
             c = conn.cursor()
 
             keys = list(args.keys())
@@ -93,7 +92,7 @@ def is_in_table(name, args={}, fetch='*'):
 def get_in_order(name, fetch, order):
     try:
         with lock:
-            conn = sqlite3.connect(f'{DB_FOLDER}/{name}')
+            conn = sqlite3.connect(f'{DB_FOLDER}/{name}.db')
             c = conn.cursor()
 
             c.execute(f'SELECT {fetch} FROM {name} ORDER BY {order}')
@@ -104,3 +103,24 @@ def get_in_order(name, fetch, order):
     except sqlite3.OperationalError:
         print(f'[Data]: Error when getting data from table {name}:\n{sqlite3.OperationalError}')
         return None
+
+
+# takes in table name and a 'condition dictionary' containing column names and their values:
+# args={col1: val1, col2: val2, ...}. Deletes what's matching
+def remove_from_table(name, args):
+    try:
+        with lock:
+            conn = sqlite3.connect(f'{DB_FOLDER}/{name}.db')
+            c = conn.cursor()
+
+            keys = list(args.keys())
+            vals = [str(arg) for arg in list(args.values())]
+            query = ' = ? AND '.join(keys) + ' = ?'
+
+            c.execute(f'DELETE FROM {name} WHERE {query}', tuple(vals))
+            conn.commit()
+            conn.close()
+            return True
+    except sqlite3.OperationalError:
+        print(f'[Data]: Error when getting data from table {name}:\n{sqlite3.OperationalError}')
+        return False

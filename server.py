@@ -2,9 +2,11 @@ import socket
 import _thread
 from threading import Thread
 from word_game import Player, Game
-from config import MAX_LISTEN, MAX_PLAYERS, MIN_PLAYERS, MAX_QUEUE_TIME
+from config import MAX_LISTEN, MAX_PLAYERS, MIN_PLAYERS, MAX_QUEUE_TIME, \
+    LOGIN_REGISTER_TABLE, LOGS_PATH
 from collections import deque
 import time
+import tables
 from website import run_website
 
 
@@ -16,33 +18,34 @@ class Queue:
 
     def __init__(self):
         self.queue = deque([])
-        print('[Queue]: Queue has been created')
+        with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
+            file.write(f'[Queue]: Queue has been created\n')
 
     def add_to_queue(self, player):
         self.queue.append(player)
         player.in_queue = True
-        print(f'[Queue]: Added player {player.username} to the queue')
+        with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
+            file.write(f'[Queue]: Added player {player.username} to the queue\n')
 
     def remove_from_queue(self, player):
         try:
             self.queue.remove(player)
             player.in_queue = False
-            print(f'[Queue]: Removed player {player.username} from the queue')
+            with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
+                file.write(f'[Queue]: Removed player {player.username}(#{player.id}) from the queue\n')
         except ValueError:
-            print(f'[Queue]: couldn\'t remove player {player.username} from the queue')
+            with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
+                file.write(f'[Queue]: Couldn\'t remove player {player.username}(#{player.id}) from the queue\n')
 
     def start_game(self, players):
         game = Game(players)
-        for i in range(1, 11).__reversed__():
-            time.sleep(1)
-            for player in players:
-                player.client_socket.sendall(f'The game will start in: {str(i)}\n\0'.encode())
         games.append(game)
         game.run_game()
         games.remove(game)
 
     def create_game(self):
-        print('[Queue]: Looking for players')
+        with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
+            file.write('[Queue]: Looking for players\n')
         while True:
             players = []
             queue_time = time.time()
@@ -54,8 +57,7 @@ class Queue:
                         break
                     player = self.queue.popleft()
                     try:
-                        with player.lock:
-                            player.client_socket.sendall('Get ready. The game will start soon.\0'.encode())
+                        player.client_socket.sendall(' \0'.encode())
                         players.append(player)
                     except:
                         self.remove_from_queue(player)
@@ -63,17 +65,11 @@ class Queue:
                 if MIN_PLAYERS <= len(players) <= MAX_PLAYERS:
                     new_game = Thread(target=self.start_game, args=(players,))
                     new_game.start()
-                    print('[Queue]: Queuing completed. A game will be launched.')
+                    with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
+                        file.write('[Queue]: Queuing completed. A game will be launched.\n')
             if (time.time() - queue_time) >= MAX_QUEUE_TIME:
-                print('[Queue]: Queuing completed. Timed out.')
-                for player in self.queue.__reversed__():
-                    try:
-                        with player.lock:
-                            player.client_socket.sendall('There were not enough players '
-                                                         'to start the game this time\0'.encode())
-                    except:
-                        self.remove_from_queue(player)
-                        player.logout
+                with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
+                    file.write('[Queue]: Queuing completed. Timed out.\n')
 
 
 def is_game_active(game_id):
@@ -84,52 +80,74 @@ def is_game_active(game_id):
 
 
 def start_new_connection(client_socket, client_addr, queue):
-    print(f'[Connection]: User {client_addr} connected')
     player = Player(client_socket)
     try:
-        client_socket.sendall(f'Hello, {client_addr}!\nWelcome to the server!\n\n'
-                              f'Choose one of the following options:\n'
-                              f'[r] - register\n'
-                              f'[l] - login\n\0'.encode())
-        data = player.get_input('>> ', ['l', 'r'], 1, '\nMaximum number of tries reached. Disconnecting...')
-        if data == 'l':
-            player.login(players)
-        elif data == 'r':
-            player.register()
+        player.login(players)
         if player.is_online:
             players.append(player)
-            client_socket.sendall(f'Hello, {player.username}!\n\n\0'.encode())
-            client_socket.sendall('Press CTRL-D at any point of time to logout.\0'.encode())
-            while player.is_online:
-                client_socket.sendall(f'Choose one of the following options:\n'
-                                      f'[p] - play\n'
-                                      f'[l] - logout\n\0'.encode())
-                data = player.get_input('>> ', ['l', 'p'], 1, '\nMaximum number of tries reached. Disconnecting...')
-                if data == 'l':
-                    player.logout()
-                    players.remove(player)
-                elif data == 'p':
-                    if not player.in_queue:
-                        queue.add_to_queue(player)
-                        client_socket.sendall(f'You have been added to the queue.\n'
-                                              f'There are currently {len(queue.queue) - 1} '
-                                              f'other players waiting.\0'.encode())
-                    while (player.is_online and player.in_queue) or (player.is_online and player.in_game):
-                        time.sleep(1)
+            queue.add_to_queue(player)
+            while (player.is_online and player.in_queue) or (player.is_online and player.in_game):
+                try:
+                    client_socket.sendall('\0'.encode())
+                    time.sleep(1)
+                except ConnectionAbortedError:
+                    break
     except:
-        print(f'[Connection]: User {client_addr} unreachable')
+        pass
+    if player is not None:
+        if is_game_active(player.last_game_id):
+            with open(f'{LOGS_PATH}/Game_{player.last_game_id}.txt', 'a+', encoding='utf-8') as file:
+                file.write(f'[Game #{player.last_game_id}]: Player {player.username}(#{player.id}) has left the game\n')
         try:
-            client_socket.sendall('Connection cannot be established. Quitting...\0'.encode())
-        except socket.error:
-            f'[Connection]: User {client_addr} encountered an socket error!\n{socket.error}'
-    if player is None:
-        client_socket.sendall('\0'.encode())
-    elif player.is_online:
+            players.remove(player)
+        except ValueError:
+            pass
+    if player is not None and player.is_online:
         if player.in_queue:
             queue.remove_from_queue(player)
         player.logout()
-        players.remove(player)
-    print(f'[Connection]: User {client_addr} disconnected')
+    elif player is None:
+        client_socket.sendall('?\0'.encode())
+
+
+def print_admin_cheatsheet():
+    print('CHEATSHEET:\n'
+          '[h] - show cheatsheet\n'
+          '[r] - register user: r <username> <password>\n'
+          '[d] - del user: d <username>\n'
+          '[k] - kick user: k <username>\n'
+          '[s] - stop game: s <game_id>\n')
+
+
+def admin_console():
+    while True:
+        command = input('\n>> ').split(' ')
+        if command[0] == 'h':
+            print_admin_cheatsheet()
+            continue
+        elif command[0] == 'r':
+            if len(command) != 3:
+                print('Missing arguments!\n[h] - help')
+                continue
+            new_player = Player(None)
+            new_player.register(command[1], command[2])
+            del new_player
+            continue
+        if len(command) != 2:
+            print('Missing arguments!\n[h] - help')
+        elif command[0] == 'd':
+            if tables.remove_from_table(LOGIN_REGISTER_TABLE, {'username': command[1]}):
+                print(f'[Admin]: User {command[1]} has been deleted.')
+                continue
+            print(f'[Admin]: Error when deleting user {command[1]}. User not registered.')
+        elif command[0] == 'k':
+            for player in players:
+                if player.username == command[1]:
+                    player.logout()
+        elif command[0] == 's':
+            for game in games:
+                if game.id == command[1]:
+                    game.is_running = False
 
 
 if __name__ == '__main__':
@@ -139,14 +157,13 @@ if __name__ == '__main__':
         except socket.error:
             print(socket.error)
         s.listen(MAX_LISTEN)
-        print('[Server]: Server started')
         queue = Queue()
-        games = []
         players = []
+        games = []
         website_thread = _thread.start_new_thread(run_website, (queue,))
         queuing_system_thread = _thread.start_new_thread(queue.create_game, ())
+        time.sleep(1)
+        admin_console = _thread.start_new_thread(admin_console, ())
         while True:
-            # client_socket = new socket object
-            # client_addr = tuple(client IP, TCP port number)
             client_socket, client_addr = s.accept()
             _thread.start_new_thread(start_new_connection, (client_socket, client_addr, queue))

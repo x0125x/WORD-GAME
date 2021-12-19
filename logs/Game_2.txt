@@ -1,0 +1,27 @@
+[Game #2]: Game has been added to the history
+[Game #2]: The word "sitokrzewowi" has been chosen by player p1(#1) for this round.
+[Game #2]: Data has been updated"
+[Game #2]: Player p3(#3) tried: option "+" with value: "w"
+[Game #2]: Player p3(#3) tried: option "+" with value: "e"
+[Game #2]: Player p3(#3) tried: option "+" with value: "ę"
+[Game #2]: Player p3(#3) tried: option "+" with value: "r"
+[Game #2]: Player p3(#3) tried: option "+" with value: "u"
+[Game #2]: Player p3(#3) tried: option "+" with value: "i"
+[Game #2]: Player p3(#3) tried: option "+" with value: "o"
+[Game #2]: Player p3(#3) tried: option "+" with value: "ó"
+[Game #2]: Player p3(#3) tried: option "+" with value: "a"
+[Game #2]: Player p3(#3) tried: option "+" with value: "ą"
+[Game #2]: Player p3(#3) tried: option "+" with value: "s"
+[Game #2]: Player p3(#3) tried: option "+" with value: "ś"
+[Game #2]: Player p3(#3) tried: option "+" with value: "z"
+[Game #2]: Player p3(#3) tried: option "+" with value: "t"
+[Game #2]: Player p3(#3) tried: option "+" with value: "l"
+[Game #2]: Player p3(#3) tried: option "+" with value: "ł"
+[Game #2]: Player p3(#3) tried: option "+" with value: "b"
+[Game #2]: Player p3(#3) tried: option "+" with value: "d"
+[Game #2]: Player p3(#3) tried: option "+" with value: "h"
+[Game #2]: Player p3(#3) tried: option "+" with value: "k"
+[Game #2]: Player p3(#3) has guessed all letters
+[Game #2]: The game has finished
+[Game #2]: Player p1(#1) scored: 0
+[Game #2]: Player p3(#3) scored: 12
