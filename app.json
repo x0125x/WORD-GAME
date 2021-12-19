@@ -1,0 +1,12 @@
+{
+  "name": "word-game-x0125x",
+  "description": "A version of automatized word guessing game",
+  "keywords": [
+    "python",
+    "HTML5",
+    "css",
+    "sqlite3"
+  ],
+  "website": "https://small-sharp-tool.com/",
+  "repository": "https://github.com/x0125x/WORD-GAME.git"
+}
