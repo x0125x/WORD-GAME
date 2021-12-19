@@ -3,7 +3,7 @@ import _thread
 from threading import Thread
 from word_game import Player, Game
 from config import MAX_LISTEN, MAX_PLAYERS, MIN_PLAYERS, MAX_QUEUE_TIME, \
-    LOGIN_REGISTER_TABLE, LOGS_PATH
+    LOGIN_REGISTER_TABLE, LOGS_PATH, QUEUE
 from collections import deque
 import time
 import tables
@@ -23,6 +23,7 @@ class Queue:
 
     def add_to_queue(self, player):
         self.queue.append(player)
+        tables.add_to_table(QUEUE, {'username': player.username})
         player.in_queue = True
         with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
             file.write(f'[Queue]: Added player {player.username} to the queue\n')
@@ -30,6 +31,7 @@ class Queue:
     def remove_from_queue(self, player):
         try:
             self.queue.remove(player)
+            tables.remove_from_table(QUEUE, {'username': player.username})
             player.in_queue = False
             with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
                 file.write(f'[Queue]: Removed player {player.username}(#{player.id}) from the queue\n')
@@ -44,6 +46,7 @@ class Queue:
         games.remove(game)
 
     def create_game(self):
+        tables.create_table(QUEUE, {'position': 'INTEGER PRIMARY KEY', 'username': 'TEXT(20) NOT NULL'})
         with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
             file.write('[Queue]: Looking for players\n')
         while True:

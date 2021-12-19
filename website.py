@@ -1,13 +1,13 @@
 from flask import Flask, render_template
 import tables
-from config import LOGIN_REGISTER_TABLE, GAME_HISTORY_TABLE
+from config import LOGIN_REGISTER_TABLE, GAME_HISTORY_TABLE, QUEUE
 
 app = Flask(__name__)
 
 
 @app.route("/")
 def display_main_page():
-    data = [(player.id, player.username) for player in queue]
+    data = tables.get_in_order(QUEUE, fetch='*', order='position DESC')
     return render_template("index.html", queue_len=len(queue), rows=data)
 
 

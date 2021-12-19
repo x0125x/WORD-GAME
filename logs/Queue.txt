@@ -56,3 +56,13 @@
 [Queue]: Queuing completed. Timed out.
 [Queue]: Queuing completed. Timed out.
 [Queue]: Queuing completed. Timed out.
+[Queue]: Queue has been created
+[Queue]: Looking for players
+[Queue]: Queuing completed. Timed out.
+[Queue]: Added player p1 to the queue
+[Queue]: Queuing completed. Timed out.
+[Queue]: Removed player p1(#1) from the queue
+[Queue]: Queuing completed. Timed out.
+[Queue]: Queuing completed. Timed out.
+[Queue]: Queuing completed. Timed out.
+[Queue]: Queuing completed. Timed out.
