@@ -7,8 +7,8 @@ import sys
 from time import sleep
 
 
-# HOST = '146.59.45.35'
-HOST = '127.0.0.1'
+HOST = '146.59.45.35'
+# HOST = '127.0.0.1'
 PORT = 65432
 SIZE_OF_DATA = 1024
 MAX_TRIES = 3
