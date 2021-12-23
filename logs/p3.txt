@@ -2,6 +2,7 @@
 [Access]: Player p3(#3) has logged in
 [Access]: Player p3(#3) has logged out.
 [Access]: Player p3(#3) has logged in
+[Access]: Player p3(#3) has logged out.
 [Access]: Player p3(#3) has logged in
 [Access]: Player p3(#3) has logged out.
 [Access]: Player p3(#3) has logged in

@@ -4,6 +4,8 @@
         - username                  [TEXT(20)]
         - password                  [TEXT(100)]
         - score                     [INTEGER DEFAULT 0]
+        - number_of_games           [INTEGER DEFAULT 0]
+        - average_score             [TEXT DEFAULT '0']
         - last_game_id              [INTEGER DEFAULT -1]
 
 2. table name: game_history
@@ -12,7 +14,7 @@
         - selected_word             [TEXT]
         - num_of_players            [INTEGER]
         - players_guessing_id       [TEXT]
-        - player_choosing_id        [INTEGER]
+        - winner                    [TEXT]
 
 3. table name: queue
     table columns:

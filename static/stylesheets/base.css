@@ -9,6 +9,10 @@ a{
   text-decoration: none;
 }
 
+.important{
+  color: #4ECCA3;
+}
+
 #logo{
   color: #4ECCA3;
 }

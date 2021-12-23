@@ -1,0 +1,15 @@
+[Game #3]: Game has been added to the history
+[Game #3]: Word "odgwożdżonymi" has been selected for the game
+[Game #3]: Data has been updated"
+[Game #3]: Player p3(#3) tried: option "+" with value: "w"
+[Game #3]: Player p1(#1) tried: option "+" with value: "w"
+[Game #3]: Player p2(#2) tried: option "+" with value: "w"
+[Game #3]: Player p3(#3) tried: option "=" with value: "odgważdżanymi"
+[Game #3]: Player p1(#1) tried: option "=" with value: "odgważdżanymi"
+[Game #3]: Player p2(#2) tried: option "=" with value: "odgważdżanymi"
+[Game #3]: Player p3(#3) tried: option "=" with value: "odgwożdżonymi"
+[Game #3]: Player p3(#3) has guessed the word
+[Game #3]: The game has finished
+[Game #3]: Player p3(#3) scored: 6
+[Game #3]: Player p1(#1) scored: 1
+[Game #3]: Player p2(#2) scored: 1

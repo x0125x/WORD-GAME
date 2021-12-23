@@ -1,0 +1,10 @@
+[Game #4]: Game has been added to the history
+[Game #4]: Word "wyjaskrawianego" has been selected for the game
+[Game #4]: Data has been updated"
+[Game #4]: Player p3(#3) tried: option "+" with value: "w"
+[Game #4]: Player p1(#1) tried: option "+" with value: "w"
+[Game #4]: Player p3(#3) tried: option "=" with value: "wyjaskrawianego"
+[Game #4]: Player p3(#3) has guessed the word
+[Game #4]: The game has finished
+[Game #4]: Player p3(#3) scored: 7
+[Game #4]: Player p1(#1) scored: 2

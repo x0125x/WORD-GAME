@@ -8,6 +8,7 @@ from config import *
 import socket
 from threading import Lock
 from io import open
+from random import randint
 
 
 class Player:
@@ -26,6 +27,8 @@ class Player:
         self.is_online = False
         self.guessed = ''
         self.display_word = None
+        self.num_of_games = 0
+        self.average_score = '0'
 
     def update_data(self):
         data = list(tables.is_in_table(LOGIN_REGISTER_TABLE, {'username': self.username, 'password': self.password}))
@@ -33,13 +36,17 @@ class Player:
         self.username = data[1]
         self.password = data[2]
         self.score = data[3]
-        self.last_game_id = data[4]
+        self.num_of_games = data[4]
+        self.average_score = data[5]
+        self.last_game_id = data[6]
         if self.last_game_id == -1:
             self.last_game_id = None
         return self
 
     def update_db(self, game_id):
         tables.update_table(LOGIN_REGISTER_TABLE, {'score': self.score,
+                                                   'number_of_games': self.num_of_games,
+                                                   'average_score': self.average_score,
                                                    'last_game_id': int(game_id)},
                             f'user_id={self.id}')
 
@@ -49,6 +56,8 @@ class Player:
     def update_score(self):
         self.score += self.round_points
         self.round_points = 0
+        self.num_of_games += 1
+        self.average_score = '{:.2f}'.format(self.score/self.num_of_games)
         self.update_db(self.last_game_id)
 
     def check_status(self):
@@ -76,7 +85,7 @@ class Player:
         except ConnectionAbortedError or ConnectionResetError:
             pass
 
-    def get_input(self, message, valid_chars, max_len, err_msg=None):
+    def get_input(self, message, valid_chars, max_len, err_msg=None, lower=True):
         if message is not None:
             message = message + '\0'
         with self.lock:
@@ -88,14 +97,22 @@ class Player:
                 self.client_socket.settimeout(KICK_TIME)
                 reply_time = time.time()
                 try:
-                    inp = self.client_socket.recv(SIZE_OF_DATA).decode().lower()
+                    inp = self.client_socket.recv(SIZE_OF_DATA).decode()
+                    if lower:
+                        inp = inp.lower()
                 except socket.timeout:
+                    with open(f'{LOGS_PATH}/{self.username}.txt', 'a+', encoding='utf-8') as file:
+                        file.write(f'[Input]: Player {self.username}(#{self.id}) has failed to reply '
+                                   f'in time and is being kicked.\n')
                     self.logout()
                     return None
                 reply_time = time.time() - reply_time
 
                 if reply_time > IGNORE_TIME:
                     self.client_socket.sendall('#\0')
+                    with open(f'{LOGS_PATH}/{self.username}.txt', 'a+', encoding='utf-8') as file:
+                        file.write(f'[Input]: Player {self.username}(#{self.id}) has failed to reply '
+                                   f'in time and is being ignored.\n')
                     return None
 
                 valid = True
@@ -140,6 +157,8 @@ class Player:
                 'username': f'TEXT({USERNAME_MAX_LEN}) NOT NULL',
                 'password': f'TEXT({PASSWORD_MAX_LEN}) NOT NULL',
                 'score': 'INTEGER DEFAULT 0',
+                'number_of_games': 'INTEGER DEFAULT 0',
+                'average_score': 'TEXT DEFAULT \'0\'',
                 'last_game_id': 'INTEGER DEFAULT -1'}
 
         tables.create_table(LOGIN_REGISTER_TABLE, args)
@@ -178,8 +197,8 @@ class Player:
         return False
 
     def login(self, players):
-        data = self.get_input(None, ALPHABET + DIGITS + END_OF_LINE,
-                              USERNAME_MAX_LEN + PASSWORD_MAX_LEN + 2).replace('\n', '\0').split('\0')
+        data = self.get_input(None, ALPHABET + ALPHABET.upper() + DIGITS + END_OF_LINE,
+                              USERNAME_MAX_LEN + PASSWORD_MAX_LEN + 2, lower=False).replace('\n', '\0').split('\0')
         username, passwd = data[0], data[1]
         if username is None:
             return None
@@ -221,7 +240,7 @@ class Game:
                                                  'selected_word': 'TEXT',
                                                  'num_of_players': 'INTEGER',
                                                  'players_guessing_id': 'TEXT',
-                                                 'player_choosing_id': 'INTEGER'})
+                                                 'winner': 'TEXT'})
 
     def set_word(self, player):
         word = player.get_input('@', ALPHABET + END_OF_LINE, MAX_INPUT_LEN)
@@ -289,6 +308,7 @@ class Game:
                 player.add_points(points)
                 self.update_display_word_and_recent_guess(player)
                 if not re.search('[1-4]+', player.display_word):
+                    tables.update_table(GAME_HISTORY_TABLE, {'winner': player.username}, f'game_id={self.id}')
                     self.is_running = False
                     with open(f'{LOGS_PATH}/Game_{self.id}.txt', 'a+', encoding='utf-8') as file:
                         file.write(f'[Game #{self.id}]: Player {player.username}(#{player.id}) '
@@ -308,6 +328,7 @@ class Game:
                 file.write(f'[Game #{self.id}]: Player {player.username}(#{player.id}) has guessed the word\n')
             for player in self.players:
                 player.client_socket.sendall(f'=\n{player.round_points}\n?\0'.encode())
+            tables.update_table(GAME_HISTORY_TABLE, {'winner': player.username}, f'game_id={self.id}')
             self.is_running = False
             return True
         player.client_socket.sendall('!\0'.encode())
@@ -349,17 +370,15 @@ class Game:
         with self.lock:
             self.id = tables.add_to_table(GAME_HISTORY_TABLE, {'num_of_players': len(self.players),
                                                                'players_guessing_id': '[NOT SET]',
-                                                               'player_choosing_id': '[NOT SET]',
                                                                'selected_word': '[NOT SET]'})
             with open(f'{LOGS_PATH}/Game_{self.id}.txt', 'a+', encoding='utf-8') as file:
                 file.write(f'[Game #{self.id}]: Game has been added to the history\n')
 
-    def update_history(self, guessing_players_ids, choosing_player_id):
+    def update_history(self):
         with self.lock:
             tables.update_table(GAME_HISTORY_TABLE, {'selected_word': self.word,
                                                      'players_guessing_id':
-                                                         '\n'.join([str(id_) for id_ in guessing_players_ids]),
-                                                     'player_choosing_id': str(choosing_player_id)},
+                                                         '\n'.join([str(p.username) for p in self.players])},
                                 f'game_id={self.id}')
             with open(f'{LOGS_PATH}/Game_{self.id}.txt', 'a+', encoding='utf-8') as file:
                 file.write(f'[Game #{self.id}]: Data has been updated"\n')
@@ -382,31 +401,52 @@ class Game:
                     file.write(
                         f'[Game #{self.id}]: Player {player.username}(#{player.id}) has rejoined the game\n')
 
+    @staticmethod
+    def build_dict():
+        file = open(DICT_PATH, mode='r', encoding='utf8')
+        mapped_file = mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ)
+        dictionary = {}
+        line_content = mapped_file.readline().decode()[:-2]
+        line_num = 0
+        while line_content:
+            if len(line_content) > 4:
+                dictionary[line_num] = line_content
+                line_num += 1
+            line_content = mapped_file.readline().decode()[:-2]
+        return dictionary
+
+    def select_word(self):
+        dictionary = self.build_dict()
+        line_num = randint(0, len(dictionary))
+        word = dictionary[line_num]
+        self.word = word
+        display_word = ''
+        for letter in self.word:
+            if letter in LETTERS_1LINE:
+                display_word += '1'
+            elif letter in LETTERS_2LINE:
+                display_word += '2'
+            elif letter in LETTERS_3LINE:
+                display_word += '3'
+            elif letter in LETTERS_4LINE:
+                display_word += '4'
+            else:
+                self.select_word()
+        self.display_word = display_word
+        for player in self.players:
+            player.display_word = display_word
+            player.client_socket.sendall(f'{player.display_word}\0'.encode())
+        with open(f'{LOGS_PATH}/Game_{self.id}.txt', 'a+', encoding='utf-8') as file:
+            file.write(f'[Game #{self.id}]: Word "{word}" has been selected for the game\n')
+
     def run_game(self):
         self.initialize_the_game()
         self.guessing_players = [p.id for p in self.players]
-        choosing_player = None
-        for player in self.players:
-            if self.set_word(player):
-                choosing_player = player.id
-                self.guessing_players.remove(choosing_player)
-                break
-        if self.word is None:
-            self.print_and_update_scores()
-            self.reset_game_values()
-            return 0
-        self.update_history(self.guessing_players, choosing_player)
-        for player in self.players:
-            if player.id == choosing_player:
-                continue
-            try:
-                player.client_socket.sendall(f'{player.display_word}\0'.encode())
-            except:
-                player.logout()
-        while self.is_running:
+        self.select_word()
+        self.update_history()
+        round = 0
+        while self.is_running and round < 10:
             for player in self.players:
-                if player.id == choosing_player:
-                    continue
                 if len(self.guessing_players) < 1:
                     self.is_running = False
                     break
@@ -427,7 +467,7 @@ class Game:
                 if opt in self.options.keys():
                     if not self.perform_option(player, opt, val):
                         continue
-                if self.recent_guess is not None:
-                    self.recent_guess = None
+                self.recent_guess = None
+                round += 1
         self.print_and_update_scores()
         self.reset_game_values()

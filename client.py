@@ -7,6 +7,7 @@ import sys
 from time import sleep
 
 
+# HOST = '146.59.45.35'
 HOST = '127.0.0.1'
 PORT = 65432
 SIZE_OF_DATA = 1024
@@ -24,13 +25,13 @@ def build_dict(file_path):
     file = open(file_path, mode='r', encoding='utf8')
     mapped_file = mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ)
     dictionary = {}
-    line_content = mapped_file.readline().decode()
+    line_content = mapped_file.readline().decode()[:-2]
     line_num = 0
     while line_content:
-        dictionary[line_num] = line_content
-        dictionary[line_num] = line_content
+        if len(line_content) > 4:
+            dictionary[line_num] = line_content
+            line_num += 1
         line_content = mapped_file.readline().decode()[:-2]
-        line_num += 1
     return dictionary
 
 
@@ -68,9 +69,9 @@ class Connection:
             while self.conn_alive:
                 self.client.settimeout(0.2)
                 try:
-                    data = self.receive()
+                    data = self.client.recv(SIZE_OF_DATA).decode().replace('\n', '\0').replace('\0', '')
                     if data:
-                        print(data)
+                        print(f'{data}')
                         break
                 except socket.timeout:
                     pass
@@ -100,12 +101,6 @@ class Connection:
         data = self.client.recv(SIZE_OF_DATA).decode().replace('\0', '\n')[:-1]
         print(f'Received: {data}')
         return data
-
-    @staticmethod
-    def get_word():
-        line_num = randint(0, len(DICT))
-        print(f'Choosing word: {DICT[line_num]}')
-        return DICT[line_num] + '\0'
 
     def is_guess_matching(self, guess):
         for i in range(len(self.word)):
@@ -181,12 +176,6 @@ class Connection:
                     print(f'YOUR SCORE IS: {score}')
                 self.disconnect()
                 return 0
-            elif data_last[0] == '@':
-                data = self.get_word()
-                self.word = data
-                self.client.sendall(data.encode())
-                self.disconnect()
-                return 0
             elif re.match(r'[1-4]+', data_last):
                 self.word = data_last
                 self.word_list = self.get_word_list()
@@ -210,18 +199,18 @@ class Connection:
             if data is not None:
                 print(f'Sending data: {data}')
                 self.client.sendall(data.encode())
-        except socket.error:
-            print(f'Error while sending data: {socket.error}')
+        except socket.error as error:
+            print(f'Error while sending data: {error}')
 
 
 if __name__ == '__main__':
     if len(sys.argv) == 3:
         LOGIN = sys.argv[1]
         PASSWORD = sys.argv[2]
+        for i in range(MAX_TRIES):
+            c = Connection()
+            c.connect()
+            sleep(5)
+
     else:
         print(f'FOLLOW GIVEN SYNTAX: python3 client.py <username> <password>')
-
-    for i in range(MAX_TRIES):
-        c = Connection()
-        c.connect()
-        sleep(5)

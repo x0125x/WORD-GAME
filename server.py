@@ -23,7 +23,7 @@ class Queue:
 
     def add_to_queue(self, player):
         self.queue.append(player)
-        tables.add_to_table(QUEUE, {'username': player.username})
+        tables.add_to_table(QUEUE, {'position': len(self.queue), 'username': player.username})
         player.in_queue = True
         with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
             file.write(f'[Queue]: Added player {player.username} to the queue\n')
@@ -46,7 +46,7 @@ class Queue:
         games.remove(game)
 
     def create_game(self):
-        tables.create_table(QUEUE, {'position': 'INTEGER PRIMARY KEY', 'username': 'TEXT(20) NOT NULL'})
+        tables.create_table(QUEUE, {'position': 'INTEGER', 'username': 'TEXT(20) NOT NULL'})
         with open(f'{LOGS_PATH}/Queue.txt', 'a+', encoding='utf-8') as file:
             file.write('[Queue]: Looking for players\n')
         while True:
@@ -59,8 +59,9 @@ class Queue:
                     if len(self.queue) == 0:
                         break
                     player = self.queue.popleft()
+                    tables.remove_from_table(QUEUE, {'username': player.username})
                     try:
-                        player.client_socket.sendall(' \0'.encode())
+                        player.client_socket.sendall('\0'.encode())
                         players.append(player)
                     except:
                         self.remove_from_queue(player)

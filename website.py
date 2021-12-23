@@ -8,7 +8,7 @@ app = Flask(__name__)
 @app.route("/")
 def display_main_page():
     data = tables.get_in_order(QUEUE, fetch='*', order='position DESC')
-    return render_template("index.html", queue_len=len(queue), rows=data)
+    return render_template("index.html", queue_len=len(data), rows=data)
 
 
 @app.route('/history')
@@ -21,7 +21,8 @@ def display_history():
 
 @app.route('/ranking')
 def display_ranking():
-    data = tables.get_in_order(LOGIN_REGISTER_TABLE, fetch='user_id, username, score', order='score DESC')
+    data = tables.get_in_order(LOGIN_REGISTER_TABLE, fetch='user_id, username, score, number_of_games, average_score',
+                               order='score DESC')
     if data is None:
         return render_template('ranking.html')
     return render_template('ranking.html', rows=data)
