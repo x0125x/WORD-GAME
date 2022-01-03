@@ -468,6 +468,6 @@ class Game:
                     if not self.perform_option(player, opt, val):
                         continue
                 self.recent_guess = None
-                round += 1
+            round += 1
         self.print_and_update_scores()
         self.reset_game_values()
