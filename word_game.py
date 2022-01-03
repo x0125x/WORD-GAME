@@ -109,7 +109,7 @@ class Player:
                 reply_time = time.time() - reply_time
 
                 if reply_time > IGNORE_TIME:
-                    self.client_socket.sendall('#\0')
+                    self.client_socket.sendall('#\0'.encode())
                     with open(f'{LOGS_PATH}/{self.username}.txt', 'a+', encoding='utf-8') as file:
                         file.write(f'[Input]: Player {self.username}(#{self.id}) has failed to reply '
                                    f'in time and is being ignored.\n')
